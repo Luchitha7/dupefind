@@ -34,3 +34,25 @@ hashing pass so large folders don't look frozen.
   anything.
 - **Resilient.** A single unreadable file is skipped with a warning instead of
   crashing the whole run.
+
+## Requirements
+
+- Python 3.8 or newer
+- [`send2trash`](https://github.com/arsenetar/send2trash) — required for `--delete`
+- [`tqdm`](https://github.com/tqdm/tqdm) — progress bar (optional; the tool
+  falls back to a plain counter if it isn't installed)
+
+## Installation
+
+```bash
+# 1. get the code
+git clone https://github.com/Luchitha7/dupefind.git
+cd dupefind
+
+# 2. (optional but recommended) create a virtual environment
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# 3. install dependencies
+python3 -m pip install -r requirements.txt
+```
