@@ -80,7 +80,7 @@ def build_delete_plan(dupe_groups):
     return keepers, to_delete
 
 
-def delete_duplicates(dupe_groups):
+def delete_duplicates(dupe_groups, dry_run=False):
     keepers, to_delete = build_delete_plan(dupe_groups)
 
     if not to_delete:
@@ -95,6 +95,10 @@ def delete_duplicates(dupe_groups):
         for path in paths[1:]:
             print(f"  DELETE {path}")
         print()
+
+    if dry_run:
+        print("Dry run: nothing was deleted.")
+        return
 
     answer = input("Proceed with sending the above copies to Trash? Type 'y' to confirm: ")
     if answer.strip().lower() != "y":
@@ -140,6 +144,12 @@ def parse_args(argv=None):
         help="send duplicate copies to the Trash (keeps one file per group); "
         "requires confirmation",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="with --delete, print exactly what would be deleted without "
+        "deleting anything",
+    )
     return parser.parse_args(argv)
 
 
@@ -155,8 +165,8 @@ def main(argv=None):
     size_groups = group_by_size(files)
     dupe_groups = group_by_hash(size_groups)
 
-    if args.delete:
-        delete_duplicates(dupe_groups)
+    if args.delete or args.dry_run:
+        delete_duplicates(dupe_groups, dry_run=args.dry_run)
     else:
         report(dupe_groups)
 
