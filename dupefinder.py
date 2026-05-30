@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""dupefind — find files with identical content and optionally remove copies.
+
+Duplicates are detected in two passes: files are first grouped by size (a cheap
+filter, since files of different sizes can't be identical), then each same-size
+group is confirmed by SHA-256 hash. By default the tool only reports what it
+finds; deletion is opt-in and always sends copies to the Trash.
+"""
+
 import argparse
 import hashlib
 import sys
@@ -11,6 +20,7 @@ except ImportError:  # progress bar is a nicety, not a hard requirement
 
 
 def get_all_files(folder):
+    """Return every regular file under *folder*, recursively."""
     files = []
     for path in Path(folder).rglob("*"):
         if path.is_file():
@@ -19,6 +29,7 @@ def get_all_files(folder):
 
 
 def group_by_size(files):
+    """Group files by byte size, keeping only sizes shared by 2+ files."""
     sizes = defaultdict(list)
     for path in files:
         try:
@@ -29,6 +40,7 @@ def group_by_size(files):
 
 
 def hash_file(path, chunk_size=65536):
+    """Return the SHA-256 hex digest of a file, read in chunks."""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         while chunk := f.read(chunk_size):
@@ -37,6 +49,11 @@ def hash_file(path, chunk_size=65536):
 
 
 def group_by_hash(size_groups):
+    """Confirm same-size files are identical by hashing, with progress.
+
+    Files that can't be read are skipped with a warning so one bad file
+    doesn't abort the whole run.
+    """
     candidates = [path for paths in size_groups.values() for path in paths]
     hashes = defaultdict(list)
 
@@ -53,12 +70,13 @@ def group_by_hash(size_groups):
             print(f"\rHashing {i}/{len(candidates)}", end="", file=sys.stderr)
 
     if tqdm is None and candidates:
-        print(file=sys.stderr)
+        print(file=sys.stderr)  # newline after the manual counter
 
     return {h: paths for h, paths in hashes.items() if len(paths) > 1}
 
 
 def report(dupe_groups):
+    """Print the duplicate groups found (the default, read-only behavior)."""
     if not dupe_groups:
         print("No duplicates found.")
         return
@@ -72,6 +90,11 @@ def report(dupe_groups):
 
 
 def build_delete_plan(dupe_groups):
+    """Choose one file to keep per group; return (keepers, to_delete).
+
+    The first file in each group is kept and the rest are scheduled for
+    removal, so every group always retains exactly one copy.
+    """
     keepers = []
     to_delete = []
     for paths in dupe_groups.values():
@@ -81,6 +104,7 @@ def build_delete_plan(dupe_groups):
 
 
 def delete_duplicates(dupe_groups, dry_run=False):
+    """Show the deletion plan and, on confirmation, send copies to Trash."""
     keepers, to_delete = build_delete_plan(dupe_groups)
 
     if not to_delete:
@@ -136,6 +160,7 @@ def parse_args(argv=None):
             "use --delete to move extra copies to the Trash (one copy per "
             "group is always kept)."
         ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("folder", help="folder to scan recursively for duplicates")
     parser.add_argument(
