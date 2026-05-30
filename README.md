@@ -17,3 +17,20 @@ Comparing every file against every other file byte-for-byte would be slow, so
 
 A progress bar (via [`tqdm`](https://github.com/tqdm/tqdm)) is shown during the
 hashing pass so large folders don't look frozen.
+
+## Safety guarantees
+
+- **Report-only by default.** Running without `--delete` only prints what it
+  finds. Nothing is ever touched.
+- **Always keeps one copy.** Within each duplicate group, one file is kept and
+  only the *extra* copies are removed.
+- **Trash, not permanent deletion.** Removed files are sent to the system
+  Trash / Recycle Bin via [`send2trash`](https://github.com/arsenetar/send2trash).
+  The tool never hard-deletes with `os.remove`, so anything removed can be
+  restored.
+- **Explicit confirmation.** Before deleting, the full plan is printed and you
+  must type `y` to proceed.
+- **`--dry-run`** lets you preview the exact deletion plan without removing
+  anything.
+- **Resilient.** A single unreadable file is skipped with a warning instead of
+  crashing the whole run.
