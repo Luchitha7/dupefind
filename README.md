@@ -56,3 +56,52 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 # 3. install dependencies
 python3 -m pip install -r requirements.txt
 ```
+
+## Usage
+
+```
+python3 dupefinder.py <folder> [--delete] [--dry-run]
+```
+
+Run `python3 dupefinder.py --help` for the full option description.
+
+The `<folder>` can be any path on your machine — relative or absolute. The scan
+is always recursive (it includes every subfolder).
+
+### 1. Report duplicates (default — deletes nothing)
+
+```bash
+python3 dupefinder.py ~/Downloads
+```
+
+### 2. Preview a deletion (dry run)
+
+Shows exactly which files would be kept and which would be removed, without
+touching anything:
+
+```bash
+python3 dupefinder.py ~/Downloads --delete --dry-run
+```
+
+### 3. Delete extra copies (sends to Trash)
+
+Prints the plan, then asks for confirmation before sending the extra copies to
+the Trash:
+
+```bash
+python3 dupefinder.py ~/Downloads --delete
+```
+
+### Tips
+
+- Wrap paths that contain spaces in quotes: `"~/My Photos"`.
+- To scan the folder you're currently in, use a dot: `python3 /path/to/dupefinder.py .`
+- Running from outside the project? Give the full path to the script:
+  `python3 /full/path/to/dupefinder.py ~/Downloads`
+- To avoid typing the long path every time, add a shell alias:
+  ```bash
+  echo "alias dupefind='python3 /full/path/to/dupefinder.py'" >> ~/.zshrc
+  source ~/.zshrc
+  # then simply:
+  dupefind ~/Downloads
+  ```
