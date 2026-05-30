@@ -4,6 +4,11 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+try:
+    from tqdm import tqdm
+except ImportError:  # progress bar is a nicety, not a hard requirement
+    tqdm = None
+
 
 def get_all_files(folder):
     files = []
@@ -32,13 +37,24 @@ def hash_file(path, chunk_size=65536):
 
 
 def group_by_hash(size_groups):
+    candidates = [path for paths in size_groups.values() for path in paths]
     hashes = defaultdict(list)
-    for paths in size_groups.values():
-        for path in paths:
-            try:
-                hashes[hash_file(path)].append(path)
-            except OSError:
-                pass
+
+    iterator = candidates
+    if tqdm is not None and candidates:
+        iterator = tqdm(candidates, desc="Hashing", unit="file")
+
+    for i, path in enumerate(iterator, 1):
+        try:
+            hashes[hash_file(path)].append(path)
+        except OSError:
+            pass
+        if tqdm is None and candidates:
+            print(f"\rHashing {i}/{len(candidates)}", end="", file=sys.stderr)
+
+    if tqdm is None and candidates:
+        print(file=sys.stderr)
+
     return {h: paths for h, paths in hashes.items() if len(paths) > 1}
 
 
