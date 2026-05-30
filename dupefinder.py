@@ -23,8 +23,8 @@ def group_by_size(files):
     for path in files:
         try:
             sizes[path.stat().st_size].append(path)
-        except OSError:
-            pass
+        except OSError as e:
+            print(f"  skipping {path}: {e}", file=sys.stderr)
     return {size: paths for size, paths in sizes.items() if len(paths) > 1}
 
 
@@ -47,8 +47,8 @@ def group_by_hash(size_groups):
     for i, path in enumerate(iterator, 1):
         try:
             hashes[hash_file(path)].append(path)
-        except OSError:
-            pass
+        except OSError as e:
+            print(f"  skipping {path}: {e}", file=sys.stderr)
         if tqdm is None and candidates:
             print(f"\rHashing {i}/{len(candidates)}", end="", file=sys.stderr)
 
