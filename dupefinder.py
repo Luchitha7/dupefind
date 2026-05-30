@@ -71,15 +71,75 @@ def report(dupe_groups):
         print()
 
 
+def build_delete_plan(dupe_groups):
+    keepers = []
+    to_delete = []
+    for paths in dupe_groups.values():
+        keepers.append(paths[0])
+        to_delete.extend(paths[1:])
+    return keepers, to_delete
+
+
+def delete_duplicates(dupe_groups):
+    keepers, to_delete = build_delete_plan(dupe_groups)
+
+    if not to_delete:
+        print("No duplicates to delete.")
+        return
+
+    print(f"Found {len(dupe_groups)} group(s) of duplicates.")
+    print(f"Will keep {len(keepers)} file(s) and remove {len(to_delete)} copy(ies):\n")
+    for i, paths in enumerate(dupe_groups.values(), 1):
+        print(f"Group {i}:")
+        print(f"  KEEP   {paths[0]}")
+        for path in paths[1:]:
+            print(f"  DELETE {path}")
+        print()
+
+    answer = input("Proceed with sending the above copies to Trash? Type 'y' to confirm: ")
+    if answer.strip().lower() != "y":
+        print("Aborted. Nothing was deleted.")
+        return
+
+    try:
+        from send2trash import send2trash
+    except ImportError:
+        print(
+            "Error: the 'send2trash' library is required for deletion.\n"
+            "Install it with: pip install send2trash",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    removed = 0
+    for path in to_delete:
+        try:
+            send2trash(str(path))
+            print(f"  Trashed {path}")
+            removed += 1
+        except OSError as e:
+            print(f"  Failed to trash {path}: {e}", file=sys.stderr)
+
+    print(f"\nDone. Sent {removed} file(s) to Trash.")
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         prog="dupefind",
         description=(
             "Find files with identical content by grouping on size, then "
-            "confirming with SHA-256 hashes."
+            "confirming with SHA-256 hashes. Reports duplicates by default; "
+            "use --delete to move extra copies to the Trash (one copy per "
+            "group is always kept)."
         ),
     )
     parser.add_argument("folder", help="folder to scan recursively for duplicates")
+    parser.add_argument(
+        "--delete",
+        action="store_true",
+        help="send duplicate copies to the Trash (keeps one file per group); "
+        "requires confirmation",
+    )
     return parser.parse_args(argv)
 
 
@@ -94,7 +154,11 @@ def main(argv=None):
     files = get_all_files(folder)
     size_groups = group_by_size(files)
     dupe_groups = group_by_hash(size_groups)
-    report(dupe_groups)
+
+    if args.delete:
+        delete_duplicates(dupe_groups)
+    else:
+        report(dupe_groups)
 
 
 if __name__ == "__main__":
