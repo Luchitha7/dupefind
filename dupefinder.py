@@ -1,7 +1,8 @@
-import sys
+import argparse
 import hashlib
-from pathlib import Path
+import sys
 from collections import defaultdict
+from pathlib import Path
 
 
 def get_all_files(folder):
@@ -41,16 +42,7 @@ def group_by_hash(size_groups):
     return {h: paths for h, paths in hashes.items() if len(paths) > 1}
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 dupefinder.py <folder>")
-        sys.exit(1)
-
-    folder = sys.argv[1]
-    files = get_all_files(folder)
-    size_groups = group_by_size(files)
-    dupe_groups = group_by_hash(size_groups)
-
+def report(dupe_groups):
     if not dupe_groups:
         print("No duplicates found.")
         return
@@ -61,6 +53,32 @@ def main():
         for path in paths:
             print(f"  {path}")
         print()
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        prog="dupefind",
+        description=(
+            "Find files with identical content by grouping on size, then "
+            "confirming with SHA-256 hashes."
+        ),
+    )
+    parser.add_argument("folder", help="folder to scan recursively for duplicates")
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    folder = Path(args.folder)
+    if not folder.is_dir():
+        print(f"Error: {folder} is not a directory.", file=sys.stderr)
+        sys.exit(1)
+
+    files = get_all_files(folder)
+    size_groups = group_by_size(files)
+    dupe_groups = group_by_hash(size_groups)
+    report(dupe_groups)
 
 
 if __name__ == "__main__":
