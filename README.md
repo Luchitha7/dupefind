@@ -137,3 +137,68 @@ Proceed with sending the above copies to Trash? Type 'y' to confirm: y
 
 Done. Sent 1 file(s) to Trash.
 ```
+
+## Troubleshooting
+
+Common errors and how to fix them.
+
+### `Error: <path> is not a directory.`
+
+The folder path doesn't exist or is mistyped. Note that `~` expands to your
+home folder, so `~/Test` means `/Users/you/Test`, **not** whatever folder your
+terminal is currently sitting in.
+
+- Check where you are with `pwd`, then pass that path.
+- To scan the current folder, use a dot: `python3 dupefinder.py .`
+- Quote paths with spaces: `python3 dupefinder.py "/Users/you/My Folder"`.
+
+### `can't open file '.../dupefinder.py': [Errno 2] No such file or directory`
+
+You pointed Python at the wrong script path (for example the literal
+placeholder `/path/to/dupefind/`). Use the real, full path to the script, e.g.
+`python3 /Users/you/Projects/dupefind/dupefinder.py ~/Downloads` — or `cd` into
+the project folder first and just run `python3 dupefinder.py <folder>`.
+
+### `ModuleNotFoundError: No module named 'send2trash'`  /  `the 'send2trash' library is required for deletion`
+
+The deletion dependency isn't installed. Install the requirements:
+
+```bash
+python3 -m pip install -r requirements.txt
+# or just the one library:
+python3 -m pip install send2trash
+```
+
+Report mode and `--dry-run` work without it; only `--delete` needs it.
+
+### `pip: command not found`
+
+Use pip through Python instead of calling it directly:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+### `command not found: python3`
+
+Python 3 isn't installed or isn't on your `PATH`. Install it from
+[python.org](https://www.python.org/downloads/) (or via Homebrew on macOS:
+`brew install python`), then re-open your terminal.
+
+### `skipping <file>: [Errno 13] Permission denied`
+
+This is **not** a crash — it's the safety guard. A file couldn't be read (locked
+or owned by another user), so it was skipped and the scan continued. Re-run with
+an account that can read the file if you need it included. Avoid running with
+`sudo` just to force access unless you understand the consequences.
+
+### No progress bar appears
+
+`tqdm` isn't installed, so the tool falls back to a simple `Hashing N/M`
+counter. Install it for the nicer bar: `python3 -m pip install tqdm`.
+
+### I deleted the wrong file — can I get it back?
+
+Yes. Deleted files are sent to your system **Trash / Recycle Bin**, not
+permanently erased. Open the Trash and restore (on macOS: right-click →
+"Put Back"). Use `--dry-run` first next time to preview the plan.
