@@ -105,3 +105,35 @@ python3 dupefinder.py ~/Downloads --delete
   # then simply:
   dupefind ~/Downloads
   ```
+
+## Sample output
+
+Report mode:
+
+```
+$ python3 dupefinder.py testfolder
+Hashing: 100%|██████████████████████████| 2/2 [00:00<00:00, 4200.00file/s]
+Found 1 group(s) of duplicates:
+
+Group 1:
+  testfolder/a.txt
+  testfolder/b.txt
+```
+
+Delete mode:
+
+```
+$ python3 dupefinder.py testfolder --delete
+Hashing: 100%|██████████████████████████| 2/2 [00:00<00:00, 4100.00file/s]
+Found 1 group(s) of duplicates.
+Will keep 1 file(s) and remove 1 copy(ies):
+
+Group 1:
+  KEEP   testfolder/a.txt
+  DELETE testfolder/b.txt
+
+Proceed with sending the above copies to Trash? Type 'y' to confirm: y
+  Trashed testfolder/b.txt
+
+Done. Sent 1 file(s) to Trash.
+```
